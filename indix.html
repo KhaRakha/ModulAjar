@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Book RPL: Sistem Basis Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script> 
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; overflow-x: hidden; background-color: #f8fafc; }
+        
+        /* Tooltip Glossary di Materi */
+        .glossary-term {
+            position: relative; display: inline-block;
+            border-bottom: 2px dashed #3b82f6; color: #2563eb; cursor: pointer; font-weight: 600;
+        }
+        .glossary-term .tooltiptext {
+            visibility: hidden; width: 250px; background-color: #1e293b; color: #fff;
+            text-align: center; border-radius: 8px; padding: 10px; position: absolute;
+            z-index: 50; bottom: 125%; left: 50%; margin-left: -125px; opacity: 0;
+            transition: opacity 0.3s; font-size: 0.875rem; font-weight: 400; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .glossary-term .tooltiptext::after {
+            content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px;
+            border-width: 5px; border-style: solid; border-color: #1e293b transparent transparent transparent;
+        }
+        .glossary-term:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+        /* Custom Scrollbar HANYA untuk Area Konten Kanan */
+        .scroll-container::-webkit-scrollbar { height: 8px; width: 8px; }
+        .scroll-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .scroll-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Tab Content Animation */
+        .tab-content { display: none; animation: fadeIn 0.4s ease-out forwards; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ========================================================== */
+        /* CSS MAGIC: SMOOTH COLLAPSE SIDEBAR (GAYA DASHBOARD)        */
+        /* ========================================================== */
+        @media (min-width: 1024px) {
+            /* Transisi Lebar Sidebar Kiri */
+            aside#sidebar { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: 18rem; }
+            body.sidebar-collapsed aside#sidebar { width: 5.5rem; }
+            
+            /* Transisi Margin Area Konten Kanan (Agar menyesuaikan layar mulus) */
+            #main-wrapper { transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1); margin-left: 18rem; }
+            body.sidebar-collapsed #main-wrapper { margin-left: 5.5rem; }
+
+            /* Transisi Header Sidebar */
+            #sidebar-header { transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 6rem; }
+            body.sidebar-collapsed #sidebar-header { height: 5.5rem; }
+            
+            /* Sembunyikan Logo & Teks secara bersamaan saat ditutup */
+            #branding-container { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); left: 1.25rem; top: 50%; transform: translateY(-50%); opacity: 1; visibility: visible; }
+            body.sidebar-collapsed #branding-container { opacity: 0; visibility: hidden; left: -2rem; }
+
+            /* Posisi Tombol Hamburger (Langsung pindah ke tengah saat ditutup) */
+            #btn-toggle-sidebar { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); right: 1.25rem; top: 50%; transform: translateY(-50%); }
+            body.sidebar-collapsed #btn-toggle-sidebar { right: 50%; top: 50%; transform: translate(50%, -50%); }
+
+            /* Menghilangkan Teks Kategori Pembelajaran */
+            .nav-category { transition: all 0.3s ease; max-height: 20px; opacity: 1; margin-bottom: 0.25rem; margin-top: 0.25rem; overflow: hidden; }
+            body.sidebar-collapsed .nav-category { max-height: 0; opacity: 0; margin-top: 0; margin-bottom: 0; border: none; }
+            
+            .nav-divider { transition: all 0.3s ease; margin-top: 0.5rem; margin-bottom: 0.5rem; opacity: 1; }
+            body.sidebar-collapsed .nav-divider { margin-top: 0; margin-bottom: 0; opacity: 0; }
+
+            /* Transisi Tombol Tab (Menjadi Kotak di tengah) */
+            .tab-btn { transition: all 0.3s ease; padding-left: 1rem; padding-right: 1rem; justify-content: flex-start; }
+            body.sidebar-collapsed .tab-btn { padding-left: 0; padding-right: 0; justify-content: center; width: 3.5rem; margin: 0 auto; border-left-width: 0; border-radius: 0.75rem; }
+            
+            .nav-text { transition: all 0.3s ease; max-width: 150px; opacity: 1; overflow: hidden; }
+            body.sidebar-collapsed .nav-text { max-width: 0; opacity: 0; margin-left: 0; }
+
+            /* Tooltip Hover Ikon */
+            .sidebar-tooltip { display: none; }
+            body.sidebar-collapsed .sidebar-tooltip { display: block; }
+            body.sidebar-collapsed .tab-btn:hover .sidebar-tooltip { opacity: 1; visibility: visible; transform: translate(0, -50%); }
+
+            /* Menghilangkan Peta Modul */
+            #peta-modul { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); max-height: 400px; opacity: 1; transform: scale(1); transform-origin: bottom; overflow: hidden; }
+            body.sidebar-collapsed #peta-modul { max-height: 0; opacity: 0; transform: scale(0); padding-bottom: 0; margin-bottom: 0; }
+        }
+
+        /* Styles Game Simulasi */
+        .scene { width: 70px; height: 90px; perspective: 600px; margin: 0 5px; flex-shrink: 0; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .card.is-flipped { transform: rotateY(180deg); }
+        .card__face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); border: 2px solid; user-select: none; transition: all 0.3s ease; }
+        .card__face--front { background: linear-gradient(135deg, #334155 0%, #1e293b 100%); color: #bae6fd; border-color: #475569; }
+        .card__face--front::after { content: '?'; }
+        .card__face--front:hover { border-color: #bae6fd; box-shadow: 0 0 15px rgba(186, 230, 253, 0.4); }
+        .card__face--back { background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%); color: #0f172a; transform: rotateY(180deg); border-color: #38bdf8; }
+        .card.is-wrong .card__face--back { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-color: #f87171; }
+        .card.is-target .card__face--back { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-color: #60a5fa; box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
+        .card.is-eliminated { pointer-events: none; opacity: 0.5; }
+        .card.is-eliminated .card__face--back { background: #1e293b; color: #64748b; border-color: #0f172a; box-shadow: none; }
+        
+        .quiz-option-label input:checked + span { background-color: #eff6ff; border-color: #3b82f6; color: #1e40af; font-weight: 600; }
+        .quiz-option-label.correct-answer span { background-color: #d1fae5; border-color: #10b981; color: #065f46; }
+        .quiz-option-label.wrong-answer span { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Overlay untuk Mobile -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[45] hidden opacity-0 transition-opacity duration-300 lg:hidden"></div>
+
+    <div class="flex min-h-screen w-full bg-slate-50 relative">
+        
+        <!-- ============================================== -->
+        <!-- SIDEBAR KIRI (DASHBOARD STYLE: FIXED, NO SCROLL)-->
+        <!-- ============================================== -->
+        <aside id="sidebar" class="fixed top-0 left-0 z-50 w-[85%] lg:w-[18rem] flex-shrink-0 h-screen flex flex-col bg-white shadow-2xl lg:shadow-[4px_0_24px_rgba(0,0,0,0.03)] border-r border-slate-200 transform -translate-x-full lg:translate-x-0 overflow-hidden">
+            
+            <!-- Header Sidebar dengan Absolut Position untuk Animasi Menumpuk -->
+            <div id="sidebar-header" class="relative w-full border-b border-slate-100 flex-shrink-0">
+                <!-- Wrapper Logo & Teks -->
+                <div id="branding-container" class="absolute flex items-center gap-3">
+                    <div id="sidebar-logo" class="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[10px] flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0">
+                        <i data-lucide="database" class="w-5 h-5 lg:w-6 lg:h-6"></i>
+                    </div>
+                    <div id="branding-text" class="whitespace-nowrap">
+                        <h2 class="font-extrabold text-slate-800 text-base lg:text-lg leading-tight tracking-tight">Modul RPL</h2>
+                        <p class="text-[10px] lg:text-xs text-blue-600 font-semibold tracking-wider uppercase mt-0.5">Kelas XI SMK</p>
+                    </div>
+                </div>
+                <!-- Tombol Menu (Hamburger) -->
+                <button id="btn-toggle-sidebar" onclick="toggleSidebar()" title="Tutup Navigasi" class="absolute p-2.5 text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-xl transition-colors focus:outline-none shadow-sm border border-slate-100 group">
+                    <i data-lucide="menu" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                </button>
+            </div>
+
+            <!-- Area Navigasi Tab (Tanpa Scroll, Tinggi Otomatis) -->
+            <nav class="flex flex-col flex-1 py-4 gap-1.5 px-4 w-full overflow-hidden" aria-label="Tabs" id="tab-nav">
+                
+                <span class="nav-category text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Materi Pembelajaran</span>
+
+                <button onclick="switchTab('tab-pendahuluan')" class="tab-btn active relative w-full text-left py-3 rounded-xl border-l-[3px] font-medium text-sm flex items-center border-blue-500 text-blue-600 bg-blue-50 hover:bg-blue-100 group">
+                    <i data-lucide="book-open" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">Pendahuluan</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">Pendahuluan</div>
+                </button>
+                
+                <button onclick="switchTab('tab-arsitektur')" class="tab-btn relative w-full text-left py-3 rounded-xl border-l-[3px] border-transparent font-medium text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 flex items-center group">
+                    <i data-lucide="server" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">Arsitektur & Model</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">Arsitektur & Model</div>
+                </button>
+                
+                <button onclick="switchTab('tab-erd')" class="tab-btn relative w-full text-left py-3 rounded-xl border-l-[3px] border-transparent font-medium text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 flex items-center group">
+                    <i data-lucide="layout-template" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">ERD & Normalisasi</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">ERD & Normalisasi</div>
+                </button>
+
+                <div class="nav-divider h-px w-full bg-slate-100"></div>
+                <span class="nav-category text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Praktik & Evaluasi</span>
+
+                <button onclick="switchTab('tab-games')" class="tab-btn relative w-full text-left py-3 rounded-xl border-l-[3px] border-transparent font-medium text-sm text-slate-500 hover:text-cyan-600 hover:bg-cyan-50 flex items-center group">
+                    <i data-lucide="gamepad-2" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5 text-cyan-500"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">Arena Simulasi</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">Arena Simulasi</div>
+                </button>
+                
+                <button onclick="switchTab('tab-kuis')" class="tab-btn relative w-full text-left py-3 rounded-xl border-l-[3px] border-transparent font-medium text-sm text-slate-500 hover:text-amber-600 hover:bg-amber-50 flex items-center group">
+                    <i data-lucide="check-square" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5 text-amber-500"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">Kuis (10 Soal)</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">Kuis Evaluasi</div>
+                </button>
+
+                <div class="nav-divider h-px w-full bg-slate-100"></div>
+
+                <button onclick="switchTab('tab-penutup')" class="tab-btn relative w-full text-left py-3 rounded-xl border-l-[3px] border-transparent font-medium text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 flex items-center group">
+                    <i data-lucide="flag" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">Penutup</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">Penutup</div>
+                </button>
+                
+                <button onclick="switchTab('tab-biodata')" class="tab-btn relative w-full text-left py-3 rounded-xl border-l-[3px] border-transparent font-medium text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 flex items-center group">
+                    <i data-lucide="user-circle" class="w-5 h-5 shrink-0 transition-transform group-hover:-translate-y-0.5"></i>
+                    <span class="nav-text whitespace-nowrap ml-3">Biodata Penulis</span>
+                    <div class="sidebar-tooltip absolute left-[115%] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 invisible -translate-x-2 transition-all duration-200 pointer-events-none shadow-xl z-50 whitespace-nowrap">Biodata Penulis</div>
+                </button>
+            </nav>
+
+            <!-- Peta Modul Bawah (Ikut Menciut & Hilang secara Mulus) -->
+            <div id="peta-modul" class="px-5 pb-5 mt-auto flex-shrink-0 w-full">
+                <div class="bg-gradient-to-b from-slate-800 to-slate-900 p-4 rounded-2xl shadow-lg relative overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                        <i data-lucide="layers" class="w-24 h-24 text-white"></i>
+                    </div>
+                    <h3 class="text-sm font-bold mb-2 text-white relative z-10 flex items-center gap-2">
+                        <i data-lucide="rocket" class="w-4 h-4 text-cyan-400"></i> Siap Belajar?
+                    </h3>
+                    <p class="text-[11px] text-slate-300 relative z-10 leading-relaxed">Selesaikan Modul dari Tahap 1 hingga Akhir untuk mendapatkan hasil maksimal.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================== -->
+        <!-- KOLOM KANAN UTAMA (AREA KONTEN & SCROLL)       -->
+        <!-- ============================================== -->
+        <div id="main-wrapper" class="flex flex-col flex-1 min-w-0 min-h-screen relative lg:ml-[18rem] w-full bg-slate-50">
+            
+            <!-- Mobile Top Navbar (Hanya muncul di HP) -->
+            <div class="lg:hidden flex items-center justify-between bg-white text-slate-800 border-b border-slate-200 p-4 sticky top-0 z-40 shadow-sm w-full">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md shrink-0">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                    </div>
+                    <span class="font-bold tracking-tight text-sm">Modul Basis Data</span>
+                </div>
+                <button onclick="toggleSidebar()" class="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition border border-slate-200 focus:outline-none">
+                    <i data-lucide="menu" class="w-5 h-5 text-slate-600"></i>
+                </button>
+            </div>
+
+            <!-- Header Banner Besar -->
+            <header class="bg-slate-900 text-white relative overflow-hidden flex-shrink-0 border-b-4 border-blue-500 w-full">
+                <!-- Pola Background & Efek Cahaya -->
+                <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                <div class="absolute top-0 right-0 w-80 h-80 rounded-full bg-blue-500 opacity-20 blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-cyan-500 opacity-20 blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+                
+                <div class="w-full max-w-5xl mx-auto px-6 py-12 md:py-16 lg:py-24 text-center relative z-10 flex flex-col items-center">
+                    <span class="bg-blue-500/30 text-blue-200 px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase mb-5 inline-block border border-blue-400/30 backdrop-blur-sm shadow-lg">Pembelajaran Interaktif</span>
+                    <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 leading-tight tracking-tight drop-shadow-md">
+                        SISTEM <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-300 to-indigo-300 drop-shadow-sm">BASIS DATA</span>
+                    </h1>
+                    <p class="text-base md:text-xl font-light mb-8 opacity-90 leading-relaxed max-w-2xl text-blue-50">Panduan Interaktif Membangun Struktur Penyimpanan Data Modern Dari Nol Hingga Mahir</p>
+                    <div class="flex items-center justify-center gap-3 bg-slate-800/80 px-6 py-3 rounded-full border border-slate-700 backdrop-blur-md shadow-xl">
+                        <i data-lucide="user" class="w-5 h-5 text-cyan-400 shrink-0"></i>
+                        <span class="text-sm font-medium opacity-90 truncate">Disusun Oleh: Rakha' Burhannudin M.</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Konten Tab (Bisa Scroll) -->
+            <main class="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 lg:px-12 py-8 lg:py-12">
+
+        <!-- ============================================== -->
+        <!-- TAB 1: PENDAHULUAN                             -->
+        <!-- ============================================== -->
+        <section id="tab-pendahuluan" class="tab-content active">
+            <div class="max-w-4xl mx-auto">
+                <!-- Deskripsi Menarik -->
+                <div class="bg-white p-8 md:p-10 lg:p-12 rounded-[2rem] shadow-sm border border-slate-200 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-bl-full -z-0 transition-transform duration-700 group-hover:scale-125"></div>
+                    
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-6 relative z-10 leading-tight">
+                        Menguasai Jantung <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">Teknologi Modern!</span> 💾
+                    </h2>
+                    
+                    <div class="space-y-6 text-slate-600 relative z-10 text-lg leading-relaxed">
+                        <p>
+                            Pernahkah kamu berpikir bagaimana Tokopedia menyimpan jutaan produk tanpa tertukar, atau bagaimana bank memastikan saldo rekeningmu aman dan tercatat dengan presisi setiap detiknya? 
+                        </p>
+                        <p class="p-6 bg-slate-50 rounded-2xl border-l-4 border-blue-500 shadow-inner text-slate-700 italic">
+                            "Rahasia di balik semua aplikasi canggih di dunia adalah <strong>Sistem Basis Data (Database)</strong> yang dirancang dengan sangat brilian dan terstruktur."
+                        </p>
+                        <p>
+                            Basis data bukan sekadar tumpukan angka. <span class="glossary-term">Data<span class="tooltiptext">Fakta mentah yang belum memiliki makna. Contoh: "Budi", "25", "RPL".</span></span> yang berserakan harus disusun rapi agar berubah menjadi <span class="glossary-term">Informasi<span class="tooltiptext">Data yang telah diproses menjadi bermakna. Contoh: "Budi adalah siswa RPL kelas 11 berumur 25 tahun."</span></span> yang sangat berharga.
+                        </p>
+                        <p>
+                            Di modul interaktif ini, kamu akan diajak menjadi seorang "Arsitek Data". Kita akan mempelajari cara data disimpan (Arsitektur), dirancang menggunakan diagram (ERD), dibersihkan dari duplikasi (Normalisasi), hingga simulasi pencarian datanya. Bersiaplah!
+                        </p>
+                    </div>
+
+                    <div class="mt-8 relative z-10 bg-slate-50 p-4 md:p-6 rounded-2xl border border-slate-200">
+                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4 flex items-center gap-3">
+                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="youtube" class="w-5 h-5"></i></div>
+                            Video Pengantar: Apa itu Database?
+                        </h3>
+                        <div class="aspect-video w-full rounded-xl overflow-hidden shadow-md border border-slate-300 bg-slate-200">
+                            <!-- Placeholder for Database Video -->
+                            <iframe 
+                                class="w-full h-full" 
+                                src="https://www.youtube.com/embed/wIQOGHCsAfc?si=A5X-dYc0bQz2e7XG" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                referrerpolicy="strict-origin-when-cross-origin" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: ARSITEKTUR & MODEL DATA                 -->
+        <!-- ============================================== -->
+        <section id="tab-arsitektur" class="tab-content">
+            <div class="text-center mb-12">
+                <span class="text-blue-600 font-bold tracking-widest uppercase text-sm mb-3 block">Level 2: Struktur & Model</span>
+                <h2 class="text-3xl md:text-5xl font-extrabold text-slate-800 mb-4">Arsitektur Basis Data</h2>
+                <p class="text-slate-600 max-w-3xl mx-auto text-lg">DBMS (Database Management System) menyembunyikan kerumitan penyimpanan data dari pengguna. Hal ini dicapai melalui Arsitektur Tiga Tingkat (ANSI/SPARC).</p>
+            </div>
+            
+            <div class="space-y-8">
+                <!-- External Level -->
+                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/3">
+                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl font-bold mb-6 shadow-inner"><i data-lucide="monitor-smartphone"></i></div>
+                        <h3 class="text-2xl font-bold mb-2 text-slate-800">1. Tingkat Eksternal (View)</h3>
+                        <p class="text-blue-600 font-medium mb-4 text-sm uppercase tracking-wide">Pandangan End-User</p>
+                    </div>
+                    <div class="md:w-2/3 space-y-4 text-slate-600 text-lg leading-relaxed">
+                        <p>Ini adalah tingkat teratas dan paling dekat dengan pengguna. Tingkat ini mendeskripsikan <strong>bagian dari basis data yang relevan bagi pengguna tertentu.</strong></p>
+                        <p>Seorang kasir di minimarket hanya melihat menu *barcode* dan harga barang (View Kasir), sementara manajer melihat grafik keuntungan (View Manajer), padahal datanya berasal dari database yang sama.</p>
+                    </div>
+                </div>
+
+                <!-- Conceptual Level -->
+                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/3">
+                        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl font-bold mb-6 shadow-inner"><i data-lucide="network"></i></div>
+                        <h3 class="text-2xl font-bold mb-2 text-slate-800">2. Tingkat Konseptual</h3>
+                        <p class="text-indigo-600 font-medium mb-4 text-sm uppercase tracking-wide">Pandangan Administrator (DBA)</p>
+                    </div>
+                    <div class="md:w-2/3 space-y-4 text-slate-600 text-lg leading-relaxed">
+                        <p>Tingkat ini adalah <strong>gambaran keseluruhan struktur logis</strong> dari basis data. Di sinilah Database Administrator (DBA) merancang Entitas (tabel), Atribut (kolom), dan Relasi antar tabel.</p>
+                        <p>Di level ini juga diterapkan aturan batas keamanan (*Constraint*) seperti **PRIMARY KEY** (kunci utama/unik), **FOREIGN KEY** (kunci tamu), dan aturan **NOT NULL**.</p>
+                    </div>
+                </div>
+
+                <!-- Internal Level -->
+                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/3">
+                        <div class="w-16 h-16 bg-cyan-100 text-cyan-600 rounded-2xl flex items-center justify-center text-3xl font-bold mb-6 shadow-inner"><i data-lucide="hard-drive"></i></div>
+                        <h3 class="text-2xl font-bold mb-2 text-slate-800">3. Tingkat Internal</h3>
+                        <p class="text-cyan-600 font-medium mb-4 text-sm uppercase tracking-wide">Penyimpanan Fisik (Physical)</p>
+                    </div>
+                    <div class="md:w-2/3 space-y-4 text-slate-600 text-lg leading-relaxed">
+                        <p>Tingkat ini sangat teknis. Mengatur <strong>bagaimana data secara fisik disimpan</strong> di dalam perangkat keras (Harddisk/SSD server), termasuk alokasi ruang penyimpanan dan pembuatan *Index* agar pencarian data menjadi cepat.</p>
+                        <div class="bg-cyan-50 p-6 rounded-2xl border border-cyan-100 mt-4">
+                            <h4 class="font-bold text-cyan-900 mb-2 flex items-center gap-2"><i data-lucide="zap" class="w-5 h-5 text-cyan-500"></i> Tujuan Arsitektur: Data Independence</h4>
+                            <p class="text-cyan-800 text-base">Berkat pembagian 3 tingkat ini, kita bisa memindahkan database fisik dari server lama ke *Cloud* (Internal Level) <strong>tanpa merusak</strong> aplikasi atau tampilan web yang sedang dipakai pengguna (External Level). Ini disebut *Physical Data Independence*.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: ERD & NORMALISASI                       -->
+        <!-- ============================================== -->
+        <section id="tab-erd" class="tab-content">
+            <div class="bg-slate-900 text-white p-10 md:p-14 rounded-[2rem] mb-10 shadow-xl relative overflow-hidden">
+                <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/circuit-board.png')]"></div>
+                <div class="relative z-10 max-w-3xl">
+                    <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Mendesain Data Ideal 📐</h2>
+                    <p class="text-lg md:text-xl text-blue-200 leading-relaxed">
+                        Sebelum menulis perintah SQL (seperti CREATE TABLE), database harus digambar skemanya menggunakan <strong>ERD (Entity Relationship Diagram)</strong> dan dibersihkan dari *redundansi* (pengulangan data) melalui proses <strong>Normalisasi</strong>.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-10">
+                <!-- Komponen ERD -->
+                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border-l-8 border-indigo-500">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center"><i data-lucide="layout-template" class="w-7 h-7"></i></div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-slate-800">Komponen Dasar ERD</h3>
+                            <p class="text-slate-500 font-medium">Bentuk Notasi Pemodelan Data (Chen)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-3 gap-6 items-start mt-8 text-center">
+                        <div class="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
+                            <div class="w-24 h-12 border-2 border-slate-800 bg-white mx-auto mb-4 flex items-center justify-center font-bold">ENTITAS</div>
+                            <h4 class="font-bold text-lg">Entitas (Persegi Panjang)</h4>
+                            <p class="text-sm text-slate-500 mt-2">Objek yang informasinya akan disimpan (Misal: Siswa, Buku, Guru).</p>
+                        </div>
+                        <div class="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
+                            <div class="w-24 h-12 border-2 border-slate-800 bg-white rounded-[50%] mx-auto mb-4 flex items-center justify-center font-bold">ATRIBUT</div>
+                            <h4 class="font-bold text-lg">Atribut (Elips/Oval)</h4>
+                            <p class="text-sm text-slate-500 mt-2">Karakteristik dari entitas (Misal: Nama, NISN, Alamat).</p>
+                        </div>
+                        <div class="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
+                            <div class="w-16 h-16 border-2 border-slate-800 bg-white mx-auto mb-4 flex items-center justify-center font-bold transform rotate-45"><span class="-rotate-45 text-xs">RELASI</span></div>
+                            <h4 class="font-bold text-lg">Relasi (Belah Ketupat)</h4>
+                            <p class="text-sm text-slate-500 mt-2">Hubungan antar entitas (Misal: Siswa <em>MEMINJAM</em> Buku).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Normalisasi -->
+                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-emerald-200">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center"><i data-lucide="filter" class="w-7 h-7"></i></div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-slate-800">Tahapan Normalisasi</h3>
+                            <p class="text-slate-500 font-medium">Proses Pembersihan Anomali Data</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-1 gap-6 items-start mt-6 text-slate-600 leading-relaxed">
+                        <p>Normalisasi adalah proses memecah tabel besar menjadi beberapa tabel kecil yang saling terhubung untuk menghilangkan redudansi dan anomali (*insert, update, delete*).</p>
+                        <ul class="space-y-4">
+                            <li class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <strong>1. UNF (Unnormalized Form):</strong> Data mentah berbentuk tabel kotor. Masih ada sel/kolom yang berisi kelompok nilai berulang.
+                            </li>
+                            <li class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                                <strong>2. 1NF (Bentuk Normal Kesatu):</strong> Setiap sel berisi nilai atomik (tidak bisa dibagi lagi). Data berulang dipisah menjadi baris baru.
+                            </li>
+                            <li class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                                <strong>3. 2NF (Bentuk Normal Kedua):</strong> Harus memenuhi 1NF. Menghilangkan <em>Partial Dependency</em> (atribut non-kunci tidak boleh hanya bergantung pada sebagian Primary Key).
+                            </li>
+                            <li class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-md">
+                                <strong>4. 3NF (Bentuk Normal Ketiga):</strong> Harus memenuhi 2NF. Menghilangkan <em>Transitive Dependency</em> (atribut non-kunci tidak boleh bergantung pada atribut non-kunci lainnya). <strong>Ini adalah standar tabel yang baik!</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: ARENA GAMES (SIMULASI INDEXING)         -->
+        <!-- ============================================== -->
+        <section id="tab-games" class="tab-content space-y-12">
+            <div class="text-center mb-8">
+                <span class="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4 inline-block">Praktik Visual Interaktif</span>
+                <h2 class="text-4xl md:text-5xl font-extrabold text-slate-800 mb-4">🎮 Arena Simulasi Data</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto text-lg">Terapkan teorimu ke dalam praktik! Selesaikan 3 misi utama seorang <em>Database Administrator</em> di bawah ini.</p>
+            </div>
+
+            <!-- GAME 1: ERD MATCHER -->
+            <div class="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-200 text-center">
+                <h3 class="text-3xl font-extrabold text-slate-800 mb-2">Misi 1: Arsitek ERD</h3>
+                <p class="text-slate-500 mb-8">Pasangkan deskripsi dengan simbol notasi ERD Chen yang tepat.</p>
+                
+                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100 mb-8 min-h-[120px] flex flex-col items-center justify-center shadow-inner">
+                    <p id="erd-q" class="text-lg md:text-xl font-medium text-slate-700 leading-relaxed"></p>
+                    <p id="erd-status" class="text-blue-600 font-bold mt-4 tracking-wide">Pilih simbol di bawah ini!</p>
+                </div>
+
+                <div class="flex flex-wrap justify-center items-center gap-8 md:gap-16 my-8">
+                    <!-- Entitas (Persegi Panjang) -->
+                    <button onclick="checkErd('entitas', this)" class="erd-btn w-36 h-20 bg-slate-800 hover:bg-slate-700 text-white font-bold tracking-widest flex items-center justify-center transition-all duration-300 shadow-lg rounded-md">ENTITAS</button>
+                    
+                    <!-- Atribut (Elips) -->
+                    <button onclick="checkErd('atribut', this)" class="erd-btn w-36 h-20 rounded-[50%] bg-slate-800 hover:bg-slate-700 text-white font-bold tracking-widest flex items-center justify-center transition-all duration-300 shadow-lg">ATRIBUT</button>
+
+                    <!-- Relasi (Belah Ketupat) -->
+                    <button onclick="checkErd('relasi', this)" class="erd-btn w-24 h-24 transform rotate-45 bg-slate-800 hover:bg-slate-700 text-white font-bold tracking-widest flex items-center justify-center transition-all duration-300 shadow-lg m-4"><span class="-rotate-45 block">RELASI</span></button>
+                </div>
+                
+                <button onclick="initErd()" class="mt-8 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-full font-bold text-sm transition flex items-center justify-center mx-auto gap-2"><i data-lucide="refresh-ccw" class="w-4 h-4"></i> Ulangi Misi 1</button>
+            </div>
+
+            <!-- GAME 2: 1NF HUNTER (NORMALISASI) -->
+            <div class="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-700 text-center text-white">
+                <h3 class="text-3xl font-extrabold mb-2 text-white">Misi 2: Inspektur Normalisasi (1NF)</h3>
+                <p class="text-slate-400 mb-8 max-w-2xl mx-auto">Sebuah tabel tidak bisa disebut <em>Normalized</em> jika datanya masih kotor. Temukan dan klik baris data yang <strong>belum memenuhi bentuk 1NF</strong> agar sistem otomatis memecahnya!</p>
+                
+                <div class="overflow-x-auto w-full max-w-4xl mx-auto bg-slate-800 rounded-2xl border border-slate-600 shadow-inner">
+                    <table class="w-full text-left border-collapse text-slate-200">
+                        <thead>
+                            <tr class="bg-slate-950 text-slate-300 text-sm md:text-base">
+                                <th class="p-4 border-b border-slate-700">No Faktur</th>
+                                <th class="p-4 border-b border-slate-700">Pelanggan</th>
+                                <th class="p-4 border-b border-slate-700">Item Barang (Pesanan)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="norm-tbody" class="text-sm md:text-base">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 h-8 flex items-center justify-center">
+                    <p id="norm-status" class="text-amber-400 font-bold text-lg px-6 py-1 rounded-full bg-amber-400/10 border border-amber-400/20">Analisis tabel di atas dan klik baris yang menyalahi aturan!</p>
+                </div>
+                
+                <button onclick="initNorm()" class="mt-8 px-6 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 rounded-full font-bold text-sm transition flex items-center justify-center mx-auto gap-2"><i data-lucide="refresh-ccw" class="w-4 h-4"></i> Ulangi Misi 2</button>
+            </div>
+
+            <!-- GAME 3: RELATIONAL BUILDER -->
+            <div class="bg-slate-50 rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-200 text-center">
+                <h3 class="text-3xl font-extrabold mb-2 text-slate-800">Misi 3: Arsitek Relasi Tabel</h3>
+                <p class="text-slate-500 mb-8">Bangun <em>Referential Integrity</em>! Hubungkan atribut yang tepat antara tabel Induk (Master) dan tabel Anak (Detail).</p>
+                
+                <p id="rel-status" class="text-slate-700 font-bold md:text-lg mb-10 bg-white py-3 px-6 rounded-full inline-block border border-slate-200 shadow-sm shadow-slate-200/50">Langkah 1: Tentukan dan klik Kunci Utama pada tabel Induk.</p>
+
+                <div class="flex flex-col md:flex-row gap-6 md:gap-8 justify-center items-stretch max-w-3xl mx-auto">
+                    <!-- Table PRODI -->
+                    <div class="w-full md:w-64 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="bg-blue-600 text-white font-bold py-3 px-4 flex items-center justify-center gap-2"><i data-lucide="table" class="w-4 h-4"></i> Tabel PRODI</div>
+                        <div class="p-3 flex-1 flex flex-col gap-2">
+                            <button id="pk-btn" onclick="checkRel('pk')" class="w-full text-left px-4 py-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-xl flex items-center gap-3 transition-all group font-mono text-xs md:text-sm">
+                                <i data-lucide="key" class="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform"></i> <strong>id_prodi</strong>
+                            </button>
+                            <div class="w-full text-left px-4 py-3 text-slate-500 flex items-center gap-3 font-mono text-xs md:text-sm border border-transparent">
+                                <i data-lucide="align-left" class="w-4 h-4 text-slate-400"></i> nama_prodi
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connect Line -->
+                    <div class="flex flex-col items-center justify-center w-full md:w-20 shrink-0">
+                        <div id="rel-line-desktop" class="hidden md:flex flex-col items-center justify-center text-slate-300 transition-all duration-500">
+                            <i data-lucide="link" class="w-8 h-8"></i>
+                        </div>
+                        <div id="rel-line-mobile" class="flex md:hidden flex-col items-center justify-center text-slate-300 transition-all duration-500 rotate-90 my-2">
+                            <i data-lucide="link" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <!-- Table MAHASISWA -->
+                    <div class="w-full md:w-64 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="bg-emerald-600 text-white font-bold py-3 px-4 flex items-center justify-center gap-2"><i data-lucide="table" class="w-4 h-4"></i> Tabel SISWA</div>
+                        <div class="p-3 flex-1 flex flex-col gap-2">
+                            <div class="w-full text-left px-4 py-3 text-slate-500 flex items-center gap-3 font-mono text-xs md:text-sm border border-transparent">
+                                <i data-lucide="key" class="w-4 h-4 text-amber-500"></i> nim
+                            </div>
+                            <div class="w-full text-left px-4 py-3 text-slate-500 flex items-center gap-3 font-mono text-xs md:text-sm border border-transparent">
+                                <i data-lucide="align-left" class="w-4 h-4 text-slate-400"></i> nama_siswa
+                            </div>
+                            <button id="fk-btn" onclick="checkRel('fk')" class="w-full text-left px-4 py-3 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl flex items-center gap-3 transition-all group font-mono text-xs md:text-sm">
+                                <i data-lucide="link" class="w-4 h-4 text-slate-400 group-hover:scale-110 transition-transform"></i> <strong>id_prodi</strong>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="initRel()" class="mt-10 px-6 py-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-full font-bold text-sm transition flex items-center justify-center mx-auto gap-2 shadow-sm"><i data-lucide="refresh-ccw" class="w-4 h-4"></i> Ulangi Misi 3</button>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 5: KUIS (10 PERTANYAAN)                    -->
+        <!-- ============================================== -->
+        <section id="tab-kuis" class="tab-content">
+            <div class="bg-white p-6 md:p-12 rounded-[2.5rem] border border-slate-200 shadow-sm relative">
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b-2 border-blue-100 pb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0"><i data-lucide="check-square" class="w-8 h-8"></i></div>
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-slate-800">Ujian Evaluasi Kognitif</h2>
+                            <p class="text-slate-500">Uji Pemahaman Sistem Basis Data Kelas XI RPL</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-100 text-slate-600 font-bold px-4 py-2 rounded-lg text-sm border border-slate-200 flex items-center gap-2 w-max">
+                        <i data-lucide="list-ordered" class="w-4 h-4"></i> Total 10 Pertanyaan
+                    </div>
+                </div>
+
+                <div id="quiz-questions-container" class="space-y-8 mb-10">
+                    <!-- Pertanyaan akan dirender di sini -->
+                </div>
+
+                <!-- Skor & Tombol Submit -->
+                <div class="mt-10 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div id="final-score-container" class="hidden flex items-center gap-4 w-full md:w-auto">
+                        <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-black shadow-lg" id="score-circle">100</div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800" id="score-text">Luar Biasa!</h3>
+                            <p class="text-slate-500 text-sm">Skor Akhir Kamu</p>
+                        </div>
+                    </div>
+                    
+                    <button id="btn-submit-quiz" onclick="submitQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full transition-all shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 flex items-center gap-2 w-full md:w-auto justify-center md:ml-auto">
+                        <i data-lucide="send" class="w-5 h-5"></i> Kumpulkan Semua Jawaban
+                    </button>
+                    
+                    <button id="btn-reset-quiz" onclick="resetQuiz()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 px-10 rounded-full transition-all flex items-center gap-2 w-full md:w-auto justify-center">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i> Coba Lagi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 6: PENUTUP                                 -->
+        <!-- ============================================== -->
+        <section id="tab-penutup" class="tab-content">
+            <div class="bg-gradient-to-br from-slate-900 to-blue-950 text-white p-10 md:p-16 rounded-[2.5rem] shadow-2xl relative overflow-hidden text-center border-t-4 border-cyan-500">
+                <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+                <div class="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+                    <div class="w-20 h-20 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center mb-8 border border-cyan-500/30 backdrop-blur-sm">
+                        <i data-lucide="award" class="w-10 h-10"></i>
+                    </div>
+                    <h2 class="text-4xl md:text-5xl font-extrabold mb-6">Misi Selesai, Arsitek Data!</h2>
+                    <p class="text-lg md:text-xl text-blue-100 leading-relaxed mb-8 opacity-90">
+                        Selamat! Kamu telah berhasil menamatkan pemahaman konsep dasar sistem basis data. Fondasi pengetahuan ini adalah langkah awal yang sangat krusial sebelum kamu turun tangan menulis barisan kode SQL.
+                    </p>
+                    <p class="text-base text-slate-300 leading-relaxed mb-10 max-w-2xl bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                        Kemampuan merancang tabel, melakukan normalisasi untuk menghilangkan redundansi, dan mengerti logika arsitektur database adalah kompetensi wajib yang akan membuatmu diakui sebagai seorang <strong>Database Administrator (DBA)</strong> atau Backend Developer yang andal di dunia kerja.
+                    </p>
+                    <button onclick="switchTab('tab-pendahuluan')" class="bg-white text-slate-900 font-bold py-3 px-8 rounded-full hover:bg-blue-50 transition duration-300 flex items-center gap-2 shadow-xl">
+                        <i data-lucide="book-open" class="w-5 h-5"></i> Baca Ulang Modul
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TAB 7: BIODATA PENULIS                         -->
+        <!-- ============================================== -->
+        <section id="tab-biodata" class="tab-content">
+            <div class="max-w-4xl mx-auto bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-slate-200">
+                <div class="h-48 md:h-64 bg-gradient-to-r from-blue-600 to-indigo-600 relative">
+                    <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                </div>
+                
+                <div class="px-8 pb-12 relative -mt-20 md:-mt-24">
+                    <div class="w-40 h-40 md:w-48 md:h-48 rounded-full border-8 border-white bg-slate-100 shadow-lg flex items-center justify-center mx-auto relative z-10 overflow-hidden">
+                        <img src="https://placehold.co/400x400/2563eb/ffffff?text=Rakha" alt="Rakha' Burhannudin Majid" class="w-full h-full object-cover">
+                    </div>
+                    
+                    <div class="text-center mt-6">
+                        <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">Rakha' Burhannudin Majid</h2>
+                        <p class="text-lg font-medium text-blue-600 mb-6 tracking-wide">Penyusun Modul Ajar • NIM A710230115</p>
+                        
+                        <div class="flex justify-center flex-wrap gap-4 mb-8">
+                            <span class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 flex items-center gap-2"><i data-lucide="graduation-cap" class="w-4 h-4 text-slate-400"></i> Univ. Muhammadiyah Surakarta</span>
+                            <span class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm font-semibold text-slate-600 flex items-center gap-2"><i data-lucide="code" class="w-4 h-4 text-slate-400"></i> Pendidikan Teknik Informatika</span>
+                        </div>
+                    </div>
+                    
+                    <div class="max-w-2xl mx-auto bg-slate-50 p-8 rounded-3xl border border-slate-100 text-slate-600 leading-relaxed shadow-inner">
+                        <p class="mb-4 text-center italic">
+                            "Modul ajar E-Book ini disusun khusus untuk peserta didik SMK Kelas XI Program Keahlian Rekayasa Perangkat Lunak (RPL)."
+                        </p>
+                        <p class="text-center">
+                            Tujuan utama E-Book ini adalah mempermudah pemahaman konsep basis data yang abstrak menjadi visualisasi interaktif. Diharapkan karya ini mampu mengembangkan wawasan sistem basis data secara terstruktur dan aplikatif.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-slate-900 text-slate-400 py-10 text-center border-t-4 border-blue-500 mt-auto w-full flex-shrink-0">
+                <div class="max-w-5xl mx-auto px-6">
+                    <p class="mb-3 font-bold text-slate-300">© 2026 E-Book Interaktif Sistem Basis Data</p>
+                    <p class="text-sm">Berdasarkan Capaian Pembelajaran SMK/MAK Jurusan RPL<br>Disusun oleh Rakha' Burhannudin M.</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. INITIALIZATION & TAB NAVIGATION
+        // ==========================================
+        if(window.lucide) lucide.createIcons();
+
+        // Fungsi Buka Tutup Sidebar Murni CSS
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            if (window.innerWidth < 1024) {
+                // Logika Mobile & Tablet (Geser keluar layar)
+                sidebar.classList.toggle('-translate-x-full');
+                if (sidebar.classList.contains('-translate-x-full')) {
+                    overlay.classList.remove('opacity-100');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                } else {
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.add('opacity-100'), 10);
+                }
+            } 
+            else {
+                // Logika Desktop (Cukup pasang satu class CSS di <body>)
+                // Semua efek menumpuk dan width diatur via CSS Transition yang sehalus mentega
+                document.body.classList.toggle('sidebar-collapsed');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600', 'bg-blue-50', 'bg-blue-50/50');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            
+            // Aktifkan style tombol untuk semua tombol yang cocok (Desktop & Mobile)
+            document.querySelectorAll(`.tab-btn[onclick="switchTab('${tabId}')"]`).forEach(activeBtn => {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+                activeBtn.classList.add('border-blue-500', 'text-blue-600', 'bg-blue-50');
+            });
+
+            // Tutup otomatis saat di HP
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('-translate-x-full')) {
+                    toggleSidebar();
+                }
+            }
+
+            // Scroll mulus kembali ke atas hanya di area konten (langsung ke teks materi)
+            const mainContainer = document.querySelector('main');
+            window.scrollTo({ top: mainContainer.offsetTop - 80, behavior: 'smooth' });
+        }
+
+        // ==========================================
+        // 2. SISTEM KUIS 10 PERTANYAAN (BASIS DATA)
+        // ==========================================
+        const quizData = [
+            {
+                question: "Pernyataan manakah yang paling tepat untuk membedakan antara Data dan Informasi?",
+                options: [
+                    "Data adalah hasil komputasi database, sedangkan informasi adalah input dari pengguna.",
+                    "Data adalah kumpulan file dalam harddisk, sedangkan informasi adalah kumpulan tabel.",
+                    "Data adalah fakta mentah yang belum diproses, sedangkan informasi adalah data yang telah diproses sehingga memiliki makna.",
+                    "Data dan informasi adalah dua istilah teknis yang memiliki makna yang sama persis dalam DBMS."
+                ],
+                correctAnswer: 2,
+                rationale: "Data adalah fakta mentah (contoh: '25'), sedangkan Informasi adalah data yang telah diberi konteks (contoh: 'Umur Budi 25 tahun')."
+            },
+            {
+                question: "Berikut ini yang <strong>BUKAN</strong> merupakan komponen utama pembentuk sistem basis data adalah...",
+                options: [
+                    "Data",
+                    "DBMS (Software)",
+                    "Printer",
+                    "Hardware"
+                ],
+                correctAnswer: 2,
+                rationale: "Komponen utama basis data adalah Data, Hardware, Software/DBMS, Pengguna (Users), dan Prosedur. Printer adalah perangkat output eksternal."
+            },
+            {
+                question: "Pada tahun 1970, tokoh bernama Edgar F. Codd memperkenalkan dan mempopulerkan sebuah model basis data yang menggunakan struktur tabel dua dimensi. Model tersebut disebut?",
+                options: [
+                    "Model Jaringan (Network)",
+                    "Model Relasional",
+                    "Model Berorientasi Objek",
+                    "Model Hierarki"
+                ],
+                correctAnswer: 1,
+                rationale: "Edgar F. Codd adalah pencipta Model Basis Data Relasional, model paling populer yang mendasari SQL dan tabel modern saat ini."
+            },
+            {
+                question: "Dalam arsitektur tiga tingkat (ANSI/SPARC), tingkat/level yang bertugas mendeskripsikan <strong>cara data fisik secara langsung disimpan di media penyimpanan (seperti Harddisk)</strong> disebut...",
+                options: [
+                    "Conceptual Level",
+                    "External Level (View)",
+                    "Internal Level (Physical)",
+                    "Logical Level"
+                ],
+                correctAnswer: 2,
+                rationale: "Internal Level atau Physical Level berhubungan langsung dengan penyimpanan file fisik dan indexing di *storage*."
+            },
+            {
+                question: "Di dalam sebuah tabel (misalnya tabel Siswa), atribut atau kombinasi kolom yang bertugas secara unik mengidentifikasi setiap baris/record sehingga tidak ada data yang kembar disebut...",
+                options: [
+                    "Foreign Key",
+                    "Primary Key",
+                    "Candidate Key",
+                    "Super Key"
+                ],
+                correctAnswer: 1,
+                rationale: "Primary Key (Kunci Utama) memastikan bahwa setiap entri pada tabel (seperti NISN siswa) bersifat unik dan tidak ganda."
+            },
+            {
+                question: "Dalam proses normalisasi tabel, pada bentuk normal keberapakah kita diwajibkan untuk menghilangkan <em>Partial Dependency</em> (ketergantungan sebagian atribut)?",
+                options: [
+                    "Bentuk Normal Pertama (1NF)",
+                    "Bentuk Normal Kedua (2NF)",
+                    "Bentuk Normal Ketiga (3NF)",
+                    "Boyce-Codd Normal Form (BCNF)"
+                ],
+                correctAnswer: 1,
+                rationale: "Bentuk Normal Kedua (2NF) mensyaratkan tabel bebas dari <em>Partial Dependency</em>, yang biasanya terjadi jika tabel memiliki komposit Primary Key."
+            },
+            {
+                question: "Relasi atau hubungan antar tabel di dalam model database relasional dibangun menggunakan fasilitas...",
+                options: [
+                    "Primary Key menunjuk ke Foreign Key",
+                    "Constraint NOT NULL",
+                    "Secondary Key",
+                    "Constraint UNIQUE"
+                ],
+                correctAnswer: 0,
+                rationale: "Relasi dibentuk melalui kolom Foreign Key pada tabel anak/detail yang merujuk nilainya pada Primary Key tabel induk."
+            },
+            {
+                question: "Kemampuan arsitektur DBMS untuk mengubah perangkat penyimpanan internal (seperti upgrade SSD) tanpa harus mengubah struktur tabel konseptual dinamakan...",
+                options: [
+                    "Logical Data Independence",
+                    "Physical Data Independence",
+                    "Storage Independence",
+                    "Structural Constraint"
+                ],
+                correctAnswer: 1,
+                rationale: "Physical Data Independence adalah pemisahan antara level konseptual dan level fisik sehingga perubahan hardware tidak merusak struktur logis database."
+            },
+            {
+                question: "Ketika Administrator Database menetapkan sebuah aturan (Constraint) yang memastikan agar sebuah kolom <strong>TIDAK BOLEH dikosongkan</strong>, aturan tersebut menggunakan keyword SQL...",
+                options: [
+                    "UNIQUE",
+                    "CHECK",
+                    "NOT NULL",
+                    "DEFAULT"
+                ],
+                correctAnswer: 2,
+                rationale: "Constraint NOT NULL mewajibkan pengguna untuk mengisi nilai saat memasukkan data (INSERT), kolom tidak boleh berstatus NULL."
+            },
+            {
+                question: "Saat menggambar diagram perancangan ERD (Entity Relationship Diagram) menggunakan notasi klasik Chen, simbol apakah yang digunakan untuk merepresentasikan <strong>Relasi</strong>?",
+                options: [
+                    "Persegi panjang",
+                    "Elips / Oval",
+                    "Belah ketupat / Diamond",
+                    "Garis ganda"
+                ],
+                correctAnswer: 2,
+                rationale: "Dalam notasi ERD Chen: Persegi Panjang untuk Entitas, Oval untuk Atribut, dan Belah Ketupat (Diamond) untuk Relasi."
+            }
+        ];
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-questions-container');
+            container.innerHTML = '';
+            
+            quizData.forEach((q, index) => {
+                const questionNum = index + 1;
+                
+                let optionsHtml = '';
+                q.options.forEach((opt, optIndex) => {
+                    optionsHtml += `
+                        <label class="quiz-option-label relative flex items-start p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition-all duration-200 hover:border-blue-300">
+                            <input type="radio" name="quiz_q${index}" value="${optIndex}" class="peer sr-only">
+                            <span class="w-full flex items-start gap-4 text-slate-600">
+                                <div class="w-6 h-6 shrink-0 rounded-full border-2 border-slate-300 flex items-center justify-center peer-checked:border-blue-600 peer-checked:bg-blue-600 mt-0.5 transition-colors">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-white opacity-0 peer-checked:opacity-100"></div>
+                                </div>
+                                <span class="text-base">${opt}</span>
+                            </span>
+                        </label>
+                    `;
+                });
+
+                const questionHtml = `
+                    <div class="quiz-item bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm" id="quiz-box-${index}">
+                        <div class="flex gap-4 items-start mb-6">
+                            <div class="w-10 h-10 shrink-0 bg-blue-500 text-white font-bold rounded-full flex items-center justify-center text-lg shadow-md">${questionNum}</div>
+                            <p class="text-lg font-bold text-slate-800 leading-relaxed pt-1">${q.question}</p>
+                        </div>
+                        <div class="space-y-3 ml-0 md:ml-14">
+                            ${optionsHtml}
+                        </div>
+                        <div id="rationale-${index}" class="hidden ml-0 md:ml-14 mt-6 p-4 rounded-xl text-sm font-medium border-l-4">
+                            <!-- Rationale text goes here -->
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML += questionHtml;
+            });
+            if(window.lucide) lucide.createIcons();
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            let answeredAll = true;
+
+            quizData.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="quiz_q${index}"]:checked`);
+                if (!selected) answeredAll = false;
+            });
+
+            if (!answeredAll) {
+                alert("Ops! Kamu belum menjawab semua pertanyaan. Silakan lengkapi dulu ya, calon DBA!");
+                return;
+            }
+
+            quizData.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="quiz_q${index}"]:checked`);
+                const selectedVal = parseInt(selected.value);
+                const quizBox = document.getElementById(`quiz-box-${index}`);
+                const rationaleBox = document.getElementById(`rationale-${index}`);
+                const labels = quizBox.querySelectorAll('label');
+
+                quizBox.querySelectorAll('input').forEach(inp => inp.disabled = true);
+
+                if (selectedVal === q.correctAnswer) {
+                    score += 10;
+                    quizBox.classList.add('border-emerald-300', 'bg-emerald-50/30');
+                    labels[selectedVal].classList.add('correct-answer');
+                    
+                    rationaleBox.innerHTML = `<div class="flex gap-2"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i> <span class="text-emerald-800"><strong>Benar!</strong> ${q.rationale}</span></div>`;
+                    rationaleBox.className = "hidden ml-0 md:ml-14 mt-6 p-4 rounded-xl text-sm font-medium border-l-4 bg-emerald-100 border-emerald-500 block";
+                } else {
+                    quizBox.classList.add('border-rose-300', 'bg-rose-50/30');
+                    labels[selectedVal].classList.add('wrong-answer');
+                    labels[q.correctAnswer].classList.add('correct-answer'); 
+                    
+                    rationaleBox.innerHTML = `<div class="flex gap-2"><i data-lucide="x-circle" class="w-5 h-5 text-rose-600 shrink-0"></i> <span class="text-rose-800"><strong>Kurang Tepat.</strong> ${q.rationale}</span></div>`;
+                    rationaleBox.className = "hidden ml-0 md:ml-14 mt-6 p-4 rounded-xl text-sm font-medium border-l-4 bg-rose-100 border-rose-500 block";
+                }
+            });
+
+            document.getElementById('btn-submit-quiz').classList.add('hidden');
+            document.getElementById('btn-reset-quiz').classList.remove('hidden');
+            
+            const scoreContainer = document.getElementById('final-score-container');
+            const scoreCircle = document.getElementById('score-circle');
+            const scoreText = document.getElementById('score-text');
+            
+            scoreContainer.classList.remove('hidden');
+            scoreCircle.innerText = score;
+            
+            if(score >= 80) {
+                scoreCircle.className = "w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center text-2xl font-black shadow-lg";
+                scoreText.innerText = "Luar Biasa, Calon DBA!";
+                scoreText.className = "text-xl font-bold text-emerald-700";
+            } else if (score >= 50) {
+                scoreCircle.className = "w-16 h-16 bg-amber-500 text-white rounded-full flex items-center justify-center text-2xl font-black shadow-lg";
+                scoreText.innerText = "Cukup Baik, Terus Berlatih!";
+                scoreText.className = "text-xl font-bold text-amber-700";
+            } else {
+                scoreCircle.className = "w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center text-2xl font-black shadow-lg";
+                scoreText.innerText = "Jangan Menyerah, Baca Lagi Materi!";
+                scoreText.className = "text-xl font-bold text-rose-700";
+            }
+
+            if(window.lucide) lucide.createIcons();
+            window.scrollTo({ top: document.getElementById('tab-kuis').offsetTop - 50, behavior: 'smooth' });
+        }
+
+        function resetQuiz() {
+            renderQuiz();
+            document.getElementById('btn-submit-quiz').classList.remove('hidden');
+            document.getElementById('btn-reset-quiz').classList.add('hidden');
+            document.getElementById('final-score-container').classList.add('hidden');
+            window.scrollTo({ top: document.getElementById('tab-kuis').offsetTop - 50, behavior: 'smooth' });
+        }
+
+
+        // ==========================================
+        // GAME 1 ENGINE: SIMULASI INDEXING (Sorting)
+        // ==========================================
+        let insDeck = [], insHand = null, insHoleIdx = -1, insPhase = 'TENTUKAN_AWAL';
+
+        function insInitGame() {
+            let nums = [];
+            while (nums.length < 10) { nums.push(Math.floor(Math.random() * 99) + 1); }
+            insDeck = nums.map((n, i) => ({ id: `id-${n}-${i}`, val: n, isSorted: false, isPembandingUtama: false }));
+            insHand = null; insHoleIdx = -1;
+            insPhase = insCheckIsSorted(nums) ? 'SELESAI' : 'TENTUKAN_AWAL';
+            insRender();
+        }
+
+        function insCheckIsSorted(arr) {
+            for (let i = 1; i < arr.length; i++) {
+                const prev = typeof arr[i-1] === 'object' ? arr[i-1].val : arr[i-1];
+                const curr = typeof arr[i] === 'object' ? arr[i].val : arr[i];
+                if (curr < prev) return false;
+            } return true;
+        }
+
+        function insCheckIsCorrectlyInserted(arr) {
+            let prev = -Infinity;
+            for (let i = 0; i < arr.length; i++) {
+                if (arr[i] && arr[i].isSorted) {
+                    if (arr[i].val < prev) return false;
+                    prev = arr[i].val;
+                }
+            } return true;
+        }
+
+        function insGetCardColor(val) {
+            const colors = ['from-blue-500 to-indigo-600', 'from-cyan-400 to-sky-500', 'from-slate-600 to-slate-800', 'from-violet-500 to-purple-600', 'from-emerald-400 to-teal-500'];
+            return colors[val % 5];
+        }
+
+        function insHandleCardClick(index) {
+            if (insPhase === 'TENTUKAN_AWAL') {
+                insDeck[index].isSorted = true; insDeck[index].isPembandingUtama = true;
+                insPhase = 'PILIH_KARTU'; insRender();
+            } else if (insPhase === 'PILIH_KARTU') {
+                if (insDeck[index] && !insDeck[index].isSorted) {
+                    insHand = insDeck[index]; insDeck[index] = null;
+                    insHoleIdx = index; insPhase = 'AKSI'; insRender();
+                }
+            }
+        }
+
+        function insHandleGeserKiri() { if (insHoleIdx > 0 && insPhase === 'AKSI') { insDeck[insHoleIdx] = insDeck[insHoleIdx - 1]; insDeck[insHoleIdx - 1] = null; insHoleIdx--; insRender(); } }
+        function insHandleGeserKanan() { if (insHoleIdx < insDeck.length - 1 && insPhase === 'AKSI') { insDeck[insHoleIdx] = insDeck[insHoleIdx + 1]; insDeck[insHoleIdx + 1] = null; insHoleIdx++; insRender(); } }
+
+        function insHandleSisip() {
+            if (!insHand || insHoleIdx === -1 || insPhase !== 'AKSI') return;
+            insHand.isSorted = true; insDeck[insHoleIdx] = insHand;
+            if (!insCheckIsCorrectlyInserted(insDeck)) { insPhase = 'GAGAL'; insHand = null; insHoleIdx = -1; insRender(); return; }
+            insHand = null; insHoleIdx = -1;
+            insPhase = insCheckIsSorted(insDeck) ? 'SELESAI' : 'PILIH_KARTU';
+            insRender();
+        }
+
+        function insRender() {
+            const banner = document.getElementById('ins-instruction-banner');
+            const bannerText = document.getElementById('ins-instruction-text');
+            let bannerClass = "w-full mb-6 p-4 rounded-xl shadow-md flex items-center gap-4 transition-all duration-300 border-2 ";
+            
+            if (insPhase === 'TENTUKAN_AWAL') { banner.className = bannerClass + "bg-blue-100 text-blue-900 border-blue-400"; bannerText.innerText = "LANGKAH 1: Database Butuh 1 Nilai Awal. Klik salah satu nilai ID bebas!"; } 
+            else if (insPhase === 'SELESAI') { banner.className = bannerClass + "bg-emerald-100 text-emerald-900 border-emerald-400"; bannerText.innerText = "BERHASIL! B-Tree Index telah tersusun sempurna."; } 
+            else if (insPhase === 'GAGAL') { banner.className = bannerClass + "bg-rose-100 text-rose-900 border-rose-400"; bannerText.innerText = "INTEGRITY ERROR! Menyisipkan ID tidak pada urutan (kecil -> besar)."; } 
+            else { banner.className = bannerClass + "bg-indigo-50 text-indigo-900 border-indigo-200"; if (insPhase === 'PILIH_KARTU') bannerText.innerText = "LANGKAH 2: Klik ID yang belum terurut untuk dimuat ke RAM."; if (insPhase === 'AKSI') bannerText.innerText = "LANGKAH 3: Geser *ruang tabel* ke tempat yang tepat untuk menjaga urutan ASCENDING."; }
+
+            const handArea = document.getElementById('ins-hand-area');
+            if (insHand) handArea.innerHTML = `<div class="w-16 h-24 md:w-20 md:h-28 bg-gradient-to-br ${insGetCardColor(insHand.val)} text-white rounded-xl flex items-center justify-center -translate-y-2 animate-bounce border-2 border-white relative shadow-lg"><div class="text-3xl font-black">${insHand.val}</div></div>`;
+            else handArea.innerHTML = `<div class="w-16 h-24 md:w-20 md:h-28 border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl flex flex-col items-center justify-center text-slate-400"><span class="text-[10px] font-bold uppercase">Memori Kosong</span></div>`;
+
+            const deckArea = document.getElementById('ins-deck-area'); deckArea.innerHTML = '';
+            insDeck.forEach((card, index) => {
+                const isSelectable = (insPhase === 'TENTUKAN_AWAL' && card) || (insPhase === 'PILIH_KARTU' && card && !card.isSorted);
+                const cardContainer = document.createElement('div'); cardContainer.className = "flex flex-col items-center shrink-0 snap-center";
+                let html = `<div class="h-6 mb-2 flex items-end justify-center w-full">${index === insHoleIdx && insPhase === 'AKSI' ? `<i data-lucide="arrow-down-to-line" class="w-5 h-5 text-blue-500 animate-bounce"></i>` : ''}</div>`;
+                if (card) {
+                    let cardClasses = `relative w-14 h-20 md:w-16 md:h-24 rounded-xl flex items-center justify-center transition-all duration-300 text-white shadow-md border-2 `;
+                    cardClasses += isSelectable ? `cursor-pointer hover:-translate-y-2 ` : `cursor-default `;
+                    if (insPhase === 'SELESAI') cardClasses += `bg-gradient-to-br ${insGetCardColor(card.val)} border-emerald-400 `;
+                    else if (insPhase === 'GAGAL') cardClasses += `bg-gradient-to-br ${insGetCardColor(card.val)} border-red-500 opacity-80 grayscale-[50%] `;
+                    else if (card.isSorted) cardClasses += `bg-gradient-to-br ${insGetCardColor(card.val)} border-teal-300 `;
+                    else cardClasses += `bg-gradient-to-br ${insGetCardColor(card.val)} border-white/30 `;
+                    html += `<div onclick="insHandleCardClick(${index})" class="${cardClasses}"><div class="text-xl md:text-2xl font-black">${card.val}</div></div>`;
+                } else { html += `<div class="w-14 h-20 md:w-16 md:h-24 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl ring-2 ring-blue-100 flex items-center justify-center text-xs font-bold text-blue-300">INSERT</div>`; }
+                cardContainer.innerHTML = html; deckArea.appendChild(cardContainer);
+            });
+
+            const btnKiri = document.getElementById('ins-btn-geser-kiri'), btnKanan = document.getElementById('ins-btn-geser-kanan'), btnSisip = document.getElementById('ins-btn-sisip');
+            if (insPhase === 'AKSI') {
+                btnSisip.disabled = false; btnSisip.className = "flex flex-col items-center justify-center py-4 rounded-2xl font-bold bg-emerald-500 text-white hover:bg-emerald-600 hover:-translate-y-1 shadow-md transition-all";
+                btnKiri.disabled = insHoleIdx <= 0; btnKiri.className = insHoleIdx > 0 ? "flex flex-col items-center justify-center py-4 rounded-2xl font-bold bg-blue-500 text-white hover:bg-blue-600 hover:-translate-y-1 shadow-md transition-all" : "flex flex-col items-center justify-center py-4 rounded-2xl font-bold bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200";
+                btnKanan.disabled = insHoleIdx >= insDeck.length - 1; btnKanan.className = insHoleIdx < insDeck.length - 1 ? "flex flex-col items-center justify-center py-4 rounded-2xl font-bold bg-blue-500 text-white hover:bg-blue-600 hover:-translate-y-1 shadow-md transition-all" : "flex flex-col items-center justify-center py-4 rounded-2xl font-bold bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200";
+            } else {
+                btnKiri.disabled = btnKanan.disabled = btnSisip.disabled = true;
+                btnKiri.className = btnKanan.className = btnSisip.className = "flex flex-col items-center justify-center py-4 rounded-2xl font-bold bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200";
+            }
+            document.getElementById('ins-reset-area').classList.toggle('hidden', !(insPhase === 'SELESAI' || insPhase === 'GAGAL'));
+            if(window.lucide) lucide.createIcons();
+        }
+
+        // ==========================================
+        // GAME 2 ENGINE: FULL TABLE SCAN
+        // ==========================================
+        const ssNumbers = [2, 5, 8, 11, 16, 20, 25, 31, 40, 42, 50, 55, 61, 70, 88];
+        let ssTarget = 40, ssLives = 4, ssWon = false, ssOver = false;
+        
+        function ssInitGame() {
+            const board = document.getElementById('ss-game-board'); board.innerHTML = '';
+            ssLives = 4; ssWon = false; ssOver = false;
+            ssTarget = ssNumbers[Math.floor(Math.random() * ssNumbers.length)];
+            
+            document.getElementById('ss-lives-counter').innerText = ssLives;
+            document.getElementById('ss-lives-counter').classList.replace('text-slate-600', 'text-rose-500');
+            document.getElementById('ss-target-display').innerText = ssTarget;
+            document.getElementById('ss-game-status').innerText = 'Klik baris mana saja, sistem akan Scan per baris!';
+            document.getElementById('ss-game-status').className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 text-center';
+            
+            ssNumbers.forEach((num) => {
+                const scene = document.createElement('div'); scene.className = 'scene';
+                const card = document.createElement('div'); card.className = 'card';
+                card.innerHTML = `<div class="card__face card__face--front"></div><div class="card__face card__face--back">${num}</div>`;
+                scene.appendChild(card);
+                card.addEventListener('click', () => {
+                    if (!card.classList.contains('is-flipped') && !ssWon && !ssOver) {
+                        card.classList.add('is-flipped'); ssLives--; document.getElementById('ss-lives-counter').innerText = ssLives;
+                        ssCheckResult(num, card);
+                    }
+                });
+                board.appendChild(scene);
+            });
+        }
+
+        function ssCheckResult(num, card) {
+            const status = document.getElementById('ss-game-status');
+            if (num === ssTarget) {
+                ssWon = true; card.classList.add('is-target');
+                status.innerText = `[Query OK] Baris ID ${ssTarget} ditemukan dengan sisa ${ssLives} *resource CPU*!`;
+                status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-cyan-300';
+            } else if (ssLives === 0) {
+                ssOver = true; card.classList.add('is-wrong');
+                status.innerText = `[TIMEOUT] Resource CPU habis karena Table Scan!`;
+                status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-rose-500';
+                document.getElementById('ss-lives-counter').classList.replace('text-rose-500', 'text-slate-600');
+            } else {
+                status.innerText = `Memindai... Nilai baris ini adalah ${num}. Bukan Target.`;
+                status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-blue-300';
+            }
+        }
+
+        function ssResetGame() { document.querySelectorAll('#ss-game-board .card').forEach(c => c.classList.remove('is-flipped', 'is-target')); setTimeout(ssInitGame, 500); }
+
+        // ==========================================
+        // GAME 3 ENGINE: INDEX SEEK (Binary Search)
+        // ==========================================
+        const bsNumbers = [2, 5, 8, 11, 16, 20, 25, 31, 40, 42, 50, 55, 61, 70, 88];
+        let bsTarget = 0, bsLives = 4, bsWon = false, bsOver = false, bsLow = 0, bsHigh = bsNumbers.length - 1, bsCards = [];
+
+        function bsInitGame() {
+            const board = document.getElementById('bs-game-board'); board.innerHTML = '';
+            bsLives = 4; bsWon = false; bsOver = false; bsLow = 0; bsHigh = bsNumbers.length - 1; bsCards = [];
+            bsTarget = bsNumbers[Math.floor(Math.random() * bsNumbers.length)];
+            
+            document.getElementById('bs-lives-counter').innerText = bsLives;
+            document.getElementById('bs-lives-counter').classList.replace('text-slate-600', 'text-rose-500');
+            document.getElementById('bs-target-display').innerText = bsTarget;
+            document.getElementById('bs-game-status').innerText = 'Klik node yang berada paling tengah!';
+            document.getElementById('bs-game-status').className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 text-center';
+
+            bsNumbers.forEach((num, index) => {
+                const scene = document.createElement('div'); scene.className = 'scene';
+                const card = document.createElement('div'); card.className = 'card';
+                card.innerHTML = `<div class="card__face card__face--front"></div><div class="card__face card__face--back">${num}</div>`;
+                scene.appendChild(card); bsCards.push(card);
+                card.addEventListener('click', () => {
+                    if (!card.classList.contains('is-flipped') && !bsWon && !bsOver && !card.classList.contains('is-eliminated')) {
+                        card.classList.add('is-flipped'); bsLives--; document.getElementById('bs-lives-counter').innerText = bsLives;
+                        bsCheckResult(num, index, card);
+                    }
+                });
+                board.appendChild(scene);
+            });
+        }
+
+        function bsCheckResult(num, index, card) {
+            const status = document.getElementById('bs-game-status');
+            if (num === bsTarget) {
+                bsWon = true; card.classList.add('is-target');
+                status.innerText = `[Query OK] Index Seek berhasil dalam ${4-bsLives} Eksekusi!`;
+                status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-cyan-300 scale-110 transition-all';
+            } else {
+                if (num < bsTarget) {
+                    status.innerText = `ID ${num} < Target. Cabang KIRI diabaikan (Dibuang)!`; status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-blue-300';
+                    for (let i = bsLow; i <= index; i++) { if (!bsCards[i].classList.contains('is-flipped')) bsCards[i].classList.add('is-flipped'); bsCards[i].classList.add('is-eliminated'); }
+                    bsLow = index + 1;
+                } else {
+                    status.innerText = `ID ${num} > Target. Cabang KANAN diabaikan (Dibuang)!`; status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-blue-300';
+                    for (let i = index; i <= bsHigh; i++) { if (!bsCards[i].classList.contains('is-flipped')) bsCards[i].classList.add('is-flipped'); bsCards[i].classList.add('is-eliminated'); }
+                    bsHigh = index - 1;
+                }
+                if (bsLives === 0 && !bsWon) {
+                    bsOver = true; card.classList.add('is-wrong'); 
+                    status.innerText = `[ERROR] Kamu keliru memilih median index.`; status.className = 'text-xl md:text-2xl font-bold mb-8 h-8 text-center text-rose-500 scale-110';
+                    document.getElementById('bs-lives-counter').classList.replace('text-rose-500', 'text-slate-600'); 
+                    const tIdx = bsNumbers.indexOf(bsTarget); bsCards[tIdx].classList.add('is-flipped', 'is-target'); bsCards[tIdx].classList.remove('is-eliminated');
+                }
+            }
+        }
+
+        function bsResetGame() { document.querySelectorAll('#bs-game-board .card').forEach(c => c.classList.remove('is-flipped', 'is-target', 'is-wrong', 'is-eliminated')); setTimeout(bsInitGame, 600); }
+
+        // ==========================================
+        // INIT ALL ON WINDOW LOAD
+        // ==========================================
+        window.onload = () => {
+            renderQuiz();
+            initErd();
+            initNorm();
+            initRel();
+        };
+
+        // ==========================================
+        // NEW GAME 1: ERD MATCHER
+        // ==========================================
+        let erdStage = 0;
+        const erdQ = [
+            { q: "Saya adalah objek utama di dunia nyata yang informasinya disimpan (contoh: SISWA, BUKU, GURU). Siapakah saya?", a: "entitas" },
+            { q: "Saya adalah karakteristik atau rincian sifat dari sebuah objek tersebut (contoh: NAMA, UMUR, ALAMAT). Siapakah saya?", a: "atribut" },
+            { q: "Saya adalah aksi atau kata kerja yang menghubungkan antar objek-objek tersebut (contoh: MEMINJAM, MENGAMBIL). Siapakah saya?", a: "relasi" }
+        ];
+
+        function initErd() {
+            erdStage = 0;
+            document.getElementById('erd-q').innerText = erdQ[erdStage].q;
+            document.getElementById('erd-status').innerText = "Pilih simbol yang tepat!";
+            document.getElementById('erd-status').className = "text-blue-600 font-bold mt-4 tracking-wide";
+            document.querySelectorAll('.erd-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-emerald-400', 'scale-110', 'bg-emerald-600'));
+        }
+
+        function checkErd(ans, btn) {
+            if(erdStage >= erdQ.length) return;
+            
+            if(ans === erdQ[erdStage].a) {
+                btn.classList.add('ring-4', 'ring-emerald-400', 'scale-110', 'bg-emerald-600');
+                erdStage++;
+                
+                if(erdStage < erdQ.length) {
+                    document.getElementById('erd-status').innerText = "Benar! Bersiap untuk pertanyaan berikutnya...";
+                    document.getElementById('erd-status').className = "text-emerald-600 font-bold mt-4 tracking-wide";
+                    setTimeout(() => {
+                        document.getElementById('erd-q').innerText = erdQ[erdStage].q;
+                        document.getElementById('erd-status').innerText = "Pilih simbol yang tepat!";
+                        document.getElementById('erd-status').className = "text-blue-600 font-bold mt-4 tracking-wide";
+                        document.querySelectorAll('.erd-btn').forEach(b => b.classList.remove('ring-4', 'ring-emerald-400', 'scale-110', 'bg-emerald-600'));
+                    }, 1800);
+                } else {
+                    document.getElementById('erd-status').innerText = "LUAR BIASA! Kamu sangat memahami Simbol ERD!";
+                    document.getElementById('erd-status').className = "text-emerald-600 font-extrabold text-xl mt-4 tracking-wide";
+                    document.getElementById('erd-q').innerText = "🎉 Simulasi Misi 1 Selesai.";
+                }
+            } else {
+                document.getElementById('erd-status').innerText = "Salah! Coba perhatikan lagi bentuk dan definisinya.";
+                document.getElementById('erd-status').className = "text-rose-600 font-bold mt-4 tracking-wide animate-pulse";
+            }
+        }
+
+        // ==========================================
+        // NEW GAME 2: NORMALISASI 1NF
+        // ==========================================
+        function initNorm() {
+            const tbody = document.getElementById('norm-tbody');
+            tbody.innerHTML = `
+                <tr class="cursor-pointer hover:bg-slate-700 transition" onclick="checkNorm(false, this)">
+                    <td class="p-4 border-b border-slate-700">TRX-01</td><td class="p-4 border-b border-slate-700">Budi</td><td class="p-4 border-b border-slate-700">Laptop ASUS</td>
+                </tr>
+                <tr class="cursor-pointer hover:bg-slate-700 transition" onclick="checkNorm(true, this)" id="norm-target">
+                    <td class="p-4 border-b border-slate-700">TRX-02</td>
+                    <td class="p-4 border-b border-slate-700">Siti</td>
+                    <td class="p-4 border-b border-slate-700">Mouse, Flashdisk</td>
+                </tr>
+                <tr class="cursor-pointer hover:bg-slate-700 transition" onclick="checkNorm(false, this)">
+                    <td class="p-4 border-b border-slate-700">TRX-03</td><td class="p-4 border-b border-slate-700">Andi</td><td class="p-4 border-b border-slate-700">Kabel HDMI</td>
+                </tr>
+            `;
+            const status = document.getElementById('norm-status');
+            status.innerText = "Analisis tabel di atas dan klik baris yang menyalahi aturan!";
+            status.className = "text-amber-400 font-bold md:text-lg px-6 py-1 rounded-full bg-amber-400/10 border border-amber-400/20";
+        }
+
+        function checkNorm(isTarget, el) {
+            const status = document.getElementById('norm-status');
+            if(isTarget) {
+                status.innerText = "Tepat! Data 'Mouse, Flashdisk' adalah Multivalue. Memecah baris...";
+                status.className = "text-emerald-400 font-bold md:text-lg px-6 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20";
+                
+                // Matikan klik baris ini agar tidak dobel
+                el.onclick = null;
+                el.classList.remove('cursor-pointer', 'hover:bg-slate-700');
+                
+                setTimeout(() => {
+                    // Pecah baris menjadi dua yang atomik
+                    el.innerHTML = '<td class="p-4 border-b border-slate-600 bg-emerald-900/40 text-emerald-200">TRX-02</td><td class="p-4 border-b border-slate-600 bg-emerald-900/40 text-emerald-200">Siti</td><td class="p-4 border-b border-slate-600 bg-emerald-900/40 font-bold text-emerald-300">Mouse</td>';
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td class="p-4 border-b border-slate-600 bg-emerald-900/40 text-emerald-200">TRX-02</td><td class="p-4 border-b border-slate-600 bg-emerald-900/40 text-emerald-200">Siti</td><td class="p-4 border-b border-slate-600 bg-emerald-900/40 font-bold text-emerald-300">Flashdisk</td>';
+                    
+                    el.parentNode.insertBefore(tr, el.nextSibling);
+                    
+                    status.innerText = "NORMALISASI 1NF BERHASIL! Seluruh sel kini Tunggal (Atomik).";
+                    status.className = "text-emerald-400 font-bold md:text-lg px-6 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 scale-105 transition-transform";
+                }, 1200);
+            } else {
+                status.innerText = "Baris ini sudah dalam bentuk atomik. Coba periksa baris yang lain!";
+                status.className = "text-rose-400 font-bold md:text-lg px-6 py-1 rounded-full bg-rose-400/10 border border-rose-400/20 animate-pulse";
+            }
+        }
+
+        // ==========================================
+        // NEW GAME 3: RELATIONAL BUILDER (FK-PK)
+        // ==========================================
+        let relState = 0; // 0: Start, 1: PK Clicked, 2: Done
+        
+        function initRel() {
+            relState = 0;
+            const pkBtn = document.getElementById('pk-btn');
+            const fkBtn = document.getElementById('fk-btn');
+            
+            pkBtn.className = "w-full text-left px-4 py-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-xl flex items-center gap-3 transition-all group font-mono text-xs md:text-sm";
+            fkBtn.className = "w-full text-left px-4 py-3 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl flex items-center gap-3 transition-all group font-mono text-xs md:text-sm";
+            
+            // Hide connection lines
+            document.getElementById('rel-line-desktop').classList.replace('text-emerald-500', 'text-slate-300');
+            document.getElementById('rel-line-mobile').classList.replace('text-emerald-500', 'text-slate-300');
+            
+            const status = document.getElementById('rel-status');
+            status.innerText = "Langkah 1: Tentukan dan klik Kunci Utama pada tabel Induk.";
+            status.className = "text-slate-700 font-bold md:text-lg mb-10 bg-white py-3 px-6 rounded-full inline-block border border-slate-200 shadow-sm shadow-slate-200/50";
+        }
+
+        function checkRel(type) {
+            const pkBtn = document.getElementById('pk-btn');
+            const fkBtn = document.getElementById('fk-btn');
+            const status = document.getElementById('rel-status');
+            
+            const lineDesktop = document.getElementById('rel-line-desktop');
+            const lineMobile = document.getElementById('rel-line-mobile');
+
+            if(relState === 0) {
+                if(type === 'pk') {
+                    pkBtn.className = "w-full text-left px-4 py-3 bg-blue-100 border-2 border-blue-500 rounded-xl flex items-center gap-3 transition-all font-mono text-xs md:text-sm shadow-inner text-blue-900";
+                    relState = 1;
+                    status.innerText = "Langkah 2: Kunci Induk ditandai! Sekarang temukan dan hubungkan ke Kunci Referensi di Tabel Anak.";
+                    status.className = "text-blue-700 font-bold md:text-lg mb-10 bg-blue-50 py-3 px-6 rounded-full inline-block border border-blue-200 shadow-sm shadow-blue-200/50";
+                } else {
+                    status.innerText = "Kurang tepat! Kamu harus memilih atribut kunci utama (Induk) terlebih dahulu.";
+                    status.className = "text-rose-700 font-bold md:text-lg mb-10 bg-rose-50 py-3 px-6 rounded-full inline-block border border-rose-200 shadow-sm shadow-rose-200/50 animate-pulse";
+                }
+            } else if (relState === 1) {
+                if(type === 'fk') {
+                    fkBtn.className = "w-full text-left px-4 py-3 bg-emerald-100 border-2 border-emerald-500 rounded-xl flex items-center gap-3 transition-all font-mono text-xs md:text-sm shadow-inner text-emerald-900";
+                    relState = 2;
+                    
+                    // Activate line colors
+                    lineDesktop.classList.replace('text-slate-300', 'text-emerald-500');
+                    lineMobile.classList.replace('text-slate-300', 'text-emerald-500');
+                    
+                    status.innerText = "🎉 RELASI BERHASIL! Referential Integrity terbentuk.";
+                    status.className = "text-emerald-700 font-bold md:text-lg mb-10 bg-emerald-50 py-3 px-6 rounded-full inline-block border border-emerald-200 shadow-sm shadow-emerald-200/50 scale-105 transition-transform";
+                } else {
+                     status.innerText = "Primary Key sudah dipilih! Tinggal klik Foreign Key (FK).";
+                     status.className = "text-amber-700 font-bold md:text-lg mb-10 bg-amber-50 py-3 px-6 rounded-full inline-block border border-amber-200 shadow-sm shadow-amber-200/50 animate-pulse";
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>
